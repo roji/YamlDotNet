@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -15,6 +16,7 @@ namespace YamlDotNet.RepresentationModel.Serialization
 	{
 		protected readonly Serializer serializer;
 		private readonly int maxRecursion;
+        public bool EmitDefaults { get; set; }
 
 		public FullObjectGraphTraversalStrategy(Serializer serializer, int maxRecursion)
 		{
@@ -190,7 +192,20 @@ namespace YamlDotNet.RepresentationModel.Serialization
 			{
 				var propertyValue = property.GetValue(value, null);
 				var propertyType = property.PropertyType;
-				var propertyName = GetPropertyName(type, property);
+
+                if (EmitDefaults)
+                {
+                    if ((propertyType.IsValueType && propertyValue == Activator.CreateInstance(type)) || value == null)
+                       continue;
+
+                    DefaultValueAttribute defaultAttr = 
+                    DefaultValueAttribute
+                    defaultAttr = property.GetCustomAttributes(typeof (DefaultValueAttribute), true).FirstOrDefault();
+                    if (property.GetCustomAttributes(typeof (DefaultValueAttribute), true).Length > 0 &&))
+                    continue;
+                }
+
+			    var propertyName = GetPropertyName(type, property);
 
 				if(visitor.EnterMapping(propertyName, typeof(string), propertyValue, propertyType))
 				{
