@@ -382,25 +382,15 @@ namespace YamlDotNet.UnitTests.RepresentationModel
 		public void RoundtripList()
 		{
 			var serializer = new Serializer();
-			var deserializer = new YamlSerializer(typeof(List<int>), YamlSerializerModes.Roundtrip);
+			var deserializer = new YamlSerializer(typeof(List<string>), YamlSerializerModes.Roundtrip);
 
-			using (StringWriter buffer = new StringWriter())
+			using (var buffer = new StringWriter())
 			{
-				List<int> original = new List<int>();
-				original.Add(2);
-				original.Add(4);
-				original.Add(6);
-				serializer.Serialize(buffer, original, typeof(List<int>), SerializationOptions.Roundtrip);
-
+			    var original = new List<string> {"2", null, "4", "6"};
+				serializer.Serialize(buffer, original, typeof(List<string>), SerializationOptions.Roundtrip);
 				Console.WriteLine(buffer.ToString());
-
-				List<int> copy = (List<int>)deserializer.Deserialize(new StringReader(buffer.ToString()));
-
-				Assert.Equal(original.Count, copy.Count);
-				
-				for(int i = 0; i < original.Count; ++i) {
-					Assert.Equal(original[i], copy[i]);
-				}
+				var copy = (List<string>)deserializer.Deserialize(new StringReader(buffer.ToString()));
+				Assert.Equal(original, copy);
 			}
 		}
 
@@ -644,27 +634,24 @@ namespace YamlDotNet.UnitTests.RepresentationModel
 		[Fact]
 		public void RoundtripDictionary()
 		{
-			Dictionary<string, string> entries = new Dictionary<string, string>
+			var entries = new Dictionary<string, string>
 			{
 				{ "key1", "value1" },
 				{ "key2", "value2" },
 				{ "key3", "value3" },
+				{ "key4", null     },
 			};
 
 			var serializer = new Serializer();
 			var deserializer = YamlSerializer.Create(entries, YamlSerializerModes.Roundtrip | YamlSerializerModes.DisableAliases);
 
-			StringWriter buffer = new StringWriter();
+			var buffer = new StringWriter();
 			serializer.Serialize(buffer, entries);
 
 			Console.WriteLine(buffer.ToString());
 
 			var deserialized = deserializer.Deserialize(new StringReader(buffer.ToString()));
-
-			foreach(var pair in deserialized)
-			{
-				Assert.Equal(entries[pair.Key], pair.Value);
-			}
+			Assert.Equal(entries, deserialized);
 		}
 
 		[Fact]
