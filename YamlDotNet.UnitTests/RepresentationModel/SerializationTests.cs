@@ -802,6 +802,55 @@ namespace YamlDotNet.UnitTests.RepresentationModel
 			}
 		}
 
+		class Parent
+		{
+			public string ParentProp { get; set; }
+		}
+
+		class Child : Parent
+		{
+			public string ChildProp { get; set; }
+		}
+
+		class ParentChildContainer
+		{
+			public Parent X { get; set; }
+			[YamlMember(serializeAs: typeof(Parent))]
+			public Child Y { get; set; }
+		}
+
+		[Fact]
+		public void ActualTypeIsSerialized()
+		{
+			var serializer = new Serializer();
+			var deserializer = new Deserializer();
+
+			using (StringWriter buffer = new StringWriter())
+			{
+				serializer.Serialize(buffer, new ParentChildContainer { X = new Child { ParentProp = "foo", ChildProp = "bar" } });
+				Console.WriteLine(buffer.ToString());
+				var copy = (ParentChildContainer)deserializer.Deserialize(new StringReader(buffer.ToString()), typeof(ParentChildContainer));
+				Assert.IsType(typeof(Child), copy.X);
+				Assert.Equal("bar", ((Child)copy.X).ChildProp);
+			}
+		}
+
+		[Fact]
+		public void SerializationRespectsSerializeAs()
+		{
+			var serializer = new Serializer();
+			var deserializer = new Deserializer();
+
+			using (StringWriter buffer = new StringWriter())
+			{
+				serializer.Serialize(buffer, new ParentChildContainer { Y = new Child { ParentProp = "foo", ChildProp = "bar" } });
+				Console.WriteLine(buffer.ToString());
+				var copy = (ParentChildContainer)deserializer.Deserialize(new StringReader(buffer.ToString()), typeof(ParentChildContainer));
+				Assert.IsType(typeof(Parent), copy.Y);
+				Assert.Null(copy.Y.ChildProp);
+			}
+		}
+
 		[Fact]
 		public void SerializeArrayOfIdenticalObjects()
 		{

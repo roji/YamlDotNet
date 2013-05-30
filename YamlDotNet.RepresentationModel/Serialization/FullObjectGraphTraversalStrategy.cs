@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
 
 namespace YamlDotNet.RepresentationModel.Serialization
@@ -207,8 +208,11 @@ namespace YamlDotNet.RepresentationModel.Serialization
 				if (visitor.EnterMapping(propertyDescriptor, propertyValue))
 				{
 					Traverse(propertyDescriptor.Name, visitor, currentDepth);
-					// TODO: Add SerializeAs
-					Traverse(propertyValue, visitor, currentDepth);
+					var attr = propertyDescriptor.Property.GetCustomAttributes(typeof (YamlMemberAttribute), true).Cast<YamlMemberAttribute>().FirstOrDefault();
+					if (attr != null && attr.SerializeAs != null)
+						Traverse(propertyValue, visitor, currentDepth, attr.SerializeAs);
+					else
+						Traverse(propertyValue, visitor, currentDepth);
 				}
 			}
 
