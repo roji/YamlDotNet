@@ -35,13 +35,26 @@ namespace YamlDotNet.RepresentationModel.Serialization
 			this.maxRecursion = maxRecursion;
 		}
 
-		void IObjectGraphTraversalStrategy.Traverse(object graph, Type type, IObjectGraphVisitor visitor)
+		void IObjectGraphTraversalStrategy.Traverse(object graph, IObjectGraphVisitor visitor)
 		{
-			Traverse(graph, type, visitor, 0);
+			Traverse(graph, visitor, 0);
 		}
 
-		protected virtual void Traverse(object value, Type type, IObjectGraphVisitor visitor, int currentDepth)
+		void IObjectGraphTraversalStrategy.Traverse(object graph, IObjectGraphVisitor visitor, Type typeOverride)
 		{
+			Traverse(graph, visitor, 0, typeOverride);
+		}
+
+		protected virtual void Traverse(object value, IObjectGraphVisitor visitor, int currentDepth, Type typeOverride=null)
+		{
+			if (value == null)
+			{
+				visitor.VisitScalar(null, null);
+				return;
+			}
+
+			var type = typeOverride ?? value.GetType();
+
 			if (++currentDepth > maxRecursion)
 			{
 				throw new InvalidOperationException("Too much recursion when traversing the object graph");
@@ -81,31 +94,23 @@ namespace YamlDotNet.RepresentationModel.Serialization
 					throw new NotSupportedException(string.Format(CultureInfo.InvariantCulture, "TypeCode.{0} is not supported.", typeCode));
 
 				default:
-					if (value == null || type == typeof(TimeSpan))
+					if (type == typeof(TimeSpan))
 					{
 						visitor.VisitScalar(value, type);
 						break;
 					}
 
-					Type underlyingType = Nullable.GetUnderlyingType(type);
-					if (underlyingType == null)
-					{
-						TraverseObject(value, type, visitor, currentDepth);
-						break;
-					}
-
-					// This is a nullable type, recursively handle it with its underlying type.
-					// Not that if it contains null, the condition above already took care of it
-					Traverse(value, underlyingType, visitor, currentDepth);
+					TraverseObject(value, type, visitor, currentDepth);
 					break;
 			}
 		}
 
 		protected virtual void TraverseObject(object value, Type type, IObjectGraphVisitor visitor, int currentDepth)
 		{
-			if (typeof(IDictionary).IsAssignableFrom(type))
+			var dict = value as IDictionary;
+			if (dict != null)
 			{
-				TraverseDictionary(value, type, visitor, currentDepth);
+				TraverseDictionary(dict, type, visitor, currentDepth);
 				return;
 			}
 
@@ -125,7 +130,7 @@ namespace YamlDotNet.RepresentationModel.Serialization
 			SerializeProperties(value, type, visitor, currentDepth);
 		}
 
-		protected virtual void TraverseDictionary(object value, Type type, IObjectGraphVisitor visitor, int currentDepth)
+		protected virtual void TraverseDictionary(IDictionary value, Type type, IObjectGraphVisitor visitor, int currentDepth)
 		{
 			visitor.VisitMappingStart(value, type, typeof(object), typeof(object));
 
@@ -135,8 +140,8 @@ namespace YamlDotNet.RepresentationModel.Serialization
 				var valueType = GetObjectType(entry.Value);
 				if (visitor.EnterMapping(entry.Key, keyType, entry.Value, valueType))
 				{
-					Traverse(entry.Key, keyType, visitor, currentDepth);
-					Traverse(entry.Value, valueType, visitor, currentDepth);
+					Traverse(entry.Key, visitor, currentDepth);
+					Traverse(entry.Value, visitor, currentDepth);
 				}
 			}
 
@@ -169,8 +174,8 @@ namespace YamlDotNet.RepresentationModel.Serialization
 			{
 				if (visitor.EnterMapping(entry.Key, typeof(TKey), entry.Value, typeof(TValue)))
 				{
-					Traverse(entry.Key, typeof(TKey), visitor, currentDepth);
-					Traverse(entry.Value, typeof(TValue), visitor, currentDepth);
+					Traverse(entry.Key, visitor, currentDepth);
+					Traverse(entry.Value, visitor, currentDepth);
 				}
 			}
 		}
@@ -184,7 +189,8 @@ namespace YamlDotNet.RepresentationModel.Serialization
 
 			foreach (var item in (IEnumerable)value)
 			{
-				Traverse(item, itemType, visitor, currentDepth);
+				// TODO: Add SerializeMembersAs for list *elements*?
+				Traverse(item, visitor, currentDepth);
 			}
 
 			visitor.VisitSequenceEnd(value, type);
@@ -200,8 +206,9 @@ namespace YamlDotNet.RepresentationModel.Serialization
 
 				if (visitor.EnterMapping(propertyDescriptor, propertyValue))
 				{
-					Traverse(propertyDescriptor.Name, typeof(string), visitor, currentDepth);
-					Traverse(propertyValue, propertyDescriptor.Property.PropertyType, visitor, currentDepth);
+					Traverse(propertyDescriptor.Name, visitor, currentDepth);
+					// TODO: Add SerializeAs
+					Traverse(propertyValue, visitor, currentDepth);
 				}
 			}
 

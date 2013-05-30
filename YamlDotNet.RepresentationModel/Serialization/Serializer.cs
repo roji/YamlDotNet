@@ -135,17 +135,14 @@ namespace YamlDotNet.RepresentationModel.Serialization
 		/// <param name="emitter">The <see cref="Emitter" /> where to serialize the object.</param>
 		/// <param name="graph">The object to serialize.</param>
 		/// <param name="type">The static type of the object to serialize.</param>
-		public void Serialize(Emitter emitter, object graph, Type type)
+		public void Serialize(Emitter emitter, object graph, Type typeOverride=null)
 		{
 			if (emitter == null)
 			{
 				throw new ArgumentNullException("emitter");
 			}
 
-			if (type == null)
-			{
-				throw new ArgumentNullException("type");
-			}
+			var type = typeOverride ?? graph.GetType();
 
 			var traversalStrategy = CreateTraversalStrategy();
 			var eventEmitter = CreateEventEmitter(emitter);
@@ -158,7 +155,7 @@ namespace YamlDotNet.RepresentationModel.Serialization
 			emitter.Emit(new StreamStart());
 			emitter.Emit(new DocumentStart());
 
-			traversalStrategy.Traverse(graph, type, emittingVisitor);
+			traversalStrategy.Traverse(graph, emittingVisitor, type);
 
 			emitter.Emit(new DocumentEnd(true));
 			emitter.Emit(new StreamEnd());
@@ -173,7 +170,7 @@ namespace YamlDotNet.RepresentationModel.Serialization
 			if ((options & SerializationOptions.DisableAliases) == 0)
 			{
 				var anchorAssigner = new AnchorAssigner();
-				traversalStrategy.Traverse(graph, type, anchorAssigner);
+				traversalStrategy.Traverse(graph, anchorAssigner, type);
 
 				emittingVisitor = new AnchorAssigningObjectGraphVisitor(emittingVisitor, eventEmitter, anchorAssigner);
 			}
