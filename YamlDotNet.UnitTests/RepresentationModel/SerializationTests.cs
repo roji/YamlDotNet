@@ -813,6 +813,22 @@ namespace YamlDotNet.UnitTests.RepresentationModel
 		}
 
 		[Fact]
+		public void BoxedArray()
+		{
+			var serializer = new Serializer();
+			var buffer = new StringWriter();
+			serializer.Serialize(buffer, new object[] {1, 2, "3"});
+
+			Console.WriteLine(buffer.ToString());
+
+			var deserializer = new YamlSerializer<int[]>();
+			var copy = deserializer.Deserialize(new StringReader(buffer.ToString()));
+			Assert.Equal(1, copy[0]);
+			Assert.Equal(2, copy[1]);
+			Assert.Equal(3, copy[2]);
+		}
+
+		[Fact]
 		public void SerializeUsingCamelCaseNaming()
 		{
 			var obj = new { foo = "bar", moreFoo = "More bar", evenMoreFoo = "Awesome" };
