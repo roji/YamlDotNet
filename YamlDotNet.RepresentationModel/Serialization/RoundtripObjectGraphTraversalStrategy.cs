@@ -16,7 +16,7 @@ namespace YamlDotNet.RepresentationModel.Serialization
 		{
 		}
 
-		protected override void SerializeProperties(object value, Type type, IObjectGraphVisitor visitor, int currentDepth)
+		protected override void SerializeProperties(object value, Type staticType, IObjectGraphVisitor visitor, int currentDepth, Type serializeAsType)
 		{
 			if (!ReflectionUtility.HasDefaultConstructor(type) && !serializer.Converters.Any(c => c.Accepts(type)))
 			{

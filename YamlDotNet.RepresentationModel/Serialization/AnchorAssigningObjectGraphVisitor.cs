@@ -30,7 +30,7 @@ namespace YamlDotNet.RepresentationModel.Serialization
 
 		public override void VisitMappingStart(object mapping, Type mappingType, Type keyType, Type valueType)
 		{
-			eventEmitter.Emit(new MappingStartEventInfo(mapping, mappingType) { Anchor = aliasProvider.GetAlias(mapping) });
+			eventEmitter.Emit(new MappingStartEventInfo(mapping, mappingType) { Anchor = aliasProvider.GetAlias(mapping), Tag="!Yo" });
 		}
 
 		public override void VisitSequenceStart(object sequence, Type sequenceType, Type elementType)

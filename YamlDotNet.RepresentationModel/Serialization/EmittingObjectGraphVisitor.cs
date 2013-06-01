@@ -33,7 +33,7 @@ namespace YamlDotNet.RepresentationModel.Serialization
 
 		void IObjectGraphVisitor.VisitMappingStart(object mapping, Type mappingType, Type type, Type valueType)
 		{
-			eventEmitter.Emit(new MappingStartEventInfo(mapping, mappingType));
+			eventEmitter.Emit(new MappingStartEventInfo(mapping, mappingType) { Tag="Yo" });
 		}
 
 		void IObjectGraphVisitor.VisitMappingEnd(object mapping, Type mappingType)
