@@ -36,6 +36,11 @@ namespace YamlDotNet.RepresentationModel.Serialization
 			nextVisitor.VisitMappingStart(mapping, mappingType, keyType, valueType);
 		}
 
+		public virtual void VisitMappingStart(object mapping, Type mappingType, Type keyType, Type valueType, bool emitTag)
+		{
+			nextVisitor.VisitMappingStart(mapping, mappingType, keyType, valueType, emitTag);
+		}
+
 		public virtual void VisitMappingEnd(object mapping, Type mappingType)
 		{
 			nextVisitor.VisitMappingEnd(mapping, mappingType);

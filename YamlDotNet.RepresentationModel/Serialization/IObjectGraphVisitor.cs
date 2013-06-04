@@ -54,6 +54,16 @@ namespace YamlDotNet.RepresentationModel.Serialization
 		void VisitMappingStart(object mapping, Type mappingType, Type keyType, Type valueType);
 
 		/// <summary>
+		/// Notifies the visitor that the traversal of a mapping is about to begin.
+		/// </summary>
+		/// <param name="mapping">The value that corresponds to the mapping.</param>
+		/// <param name="mappingType">The static type of the mapping.</param>
+		/// <param name="keyType">The static type of the keys of the mapping.</param>
+		/// <param name="valueType">The static type of the values of the mapping.</param>
+		/// <param name="emitTag">Whether to emit a YAML tag with the mapping type.</param>
+		void VisitMappingStart(object mapping, Type mappingType, Type keyType, Type valueType, bool emitTag);
+
+		/// <summary>
 		/// Notifies the visitor that the traversal of a mapping has ended.
 		/// </summary>
 		/// <param name="mapping">The value that corresponds to the mapping.</param>

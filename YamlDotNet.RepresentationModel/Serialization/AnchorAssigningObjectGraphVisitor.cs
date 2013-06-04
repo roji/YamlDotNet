@@ -33,6 +33,15 @@ namespace YamlDotNet.RepresentationModel.Serialization
 			eventEmitter.Emit(new MappingStartEventInfo(mapping, mappingType) { Anchor = aliasProvider.GetAlias(mapping) });
 		}
 
+		public override void VisitMappingStart(object mapping, Type mappingType, Type keyType, Type valueType, bool emitTag)
+		{
+			var eventInfo = new MappingStartEventInfo(mapping, mappingType) { Anchor = aliasProvider.GetAlias(mapping) };
+			// TODO: Better/centralized way to create tags
+			if (emitTag)
+				eventInfo.Tag = "!" + mappingType.AssemblyQualifiedName;
+			eventEmitter.Emit(eventInfo);
+		}
+
 		public override void VisitSequenceStart(object sequence, Type sequenceType, Type elementType)
 		{
 			eventEmitter.Emit(new SequenceStartEventInfo(sequence, sequenceType) { Anchor = aliasProvider.GetAlias(sequence) });

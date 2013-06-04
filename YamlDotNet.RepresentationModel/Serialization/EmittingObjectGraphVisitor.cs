@@ -31,9 +31,18 @@ namespace YamlDotNet.RepresentationModel.Serialization
 			eventEmitter.Emit(new ScalarEventInfo(scalar, scalarType));
 		}
 
-		void IObjectGraphVisitor.VisitMappingStart(object mapping, Type mappingType, Type type, Type valueType)
+		void IObjectGraphVisitor.VisitMappingStart(object mapping, Type mappingType, Type keyType, Type valueType)
 		{
 			eventEmitter.Emit(new MappingStartEventInfo(mapping, mappingType));
+		}
+
+		void IObjectGraphVisitor.VisitMappingStart(object mapping, Type mappingType, Type keyType, Type valueType, bool emitTag)
+		{
+			var eventInfo = new MappingStartEventInfo(mapping, mappingType);
+			// TODO: Better/centralized way to create tags
+			if (emitTag)
+				eventInfo.Tag = "!" + mappingType.AssemblyQualifiedName;
+			eventEmitter.Emit(eventInfo);
 		}
 
 		void IObjectGraphVisitor.VisitMappingEnd(object mapping, Type mappingType)

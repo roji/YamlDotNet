@@ -15,7 +15,7 @@ namespace YamlDotNet.RepresentationModel.Serialization
 	{
 		protected readonly Serializer serializer;
 		private readonly int maxRecursion;
-		private readonly ITypeDescriptor typeDescriptor;
+		protected readonly ITypeDescriptor typeDescriptor;
 
 		public FullObjectGraphTraversalStrategy(Serializer serializer, ITypeDescriptor typeDescriptor, int maxRecursion)
 		{
@@ -36,17 +36,22 @@ namespace YamlDotNet.RepresentationModel.Serialization
 			this.maxRecursion = maxRecursion;
 		}
 
-		void IObjectGraphTraversalStrategy.Traverse(object graph, IObjectGraphVisitor visitor)
+		void IObjectGraphTraversalStrategy.Traverse(object graph, IObjectGraphVisitor visitor, Type serializeAsType)
 		{
-			Traverse(graph, visitor, 0);
+			Traverse(graph, typeof(Object), visitor, 0, serializeAsType);
 		}
 
-		void IObjectGraphTraversalStrategy.Traverse(object graph, IObjectGraphVisitor visitor, Type typeOverride)
-		{
-			Traverse(graph, visitor, 0, typeOverride);
-		}
-
-		protected virtual void Traverse(object value, IObjectGraphVisitor visitor, int currentDepth, Type typeOverride=null)
+		/// <summary>
+		/// The main traversal method, called on any type and dispatches to more specific handlers.
+		/// </summary>
+		/// <param name="value">The value to be serialized</param>
+		/// <param name="staticType">The static type of of <paramref name="value"/>, for example as specified by its property.
+		/// Can be different from <paramref name="value"/>'s runtime type.</param>
+		/// <param name="visitor">The visitor that will be invoked when traversing</param>
+		/// <param name="currentDepth">The current recursion depth in the graph</param>
+		/// <param name="serializeAsType">An optional type override.
+		/// If specified, <paramref name="value"/>'s runtime type will be ignored and this will be used instead.</param>
+		protected virtual void Traverse(object value, Type staticType, IObjectGraphVisitor visitor, int currentDepth, Type serializeAsType=null)
 		{
 			if (value == null)
 			{
@@ -54,7 +59,7 @@ namespace YamlDotNet.RepresentationModel.Serialization
 				return;
 			}
 
-			var type = typeOverride ?? value.GetType();
+			var type = serializeAsType ?? value.GetType();
 
 			if (++currentDepth > maxRecursion)
 			{
@@ -101,12 +106,12 @@ namespace YamlDotNet.RepresentationModel.Serialization
 						break;
 					}
 
-					TraverseObject(value, type, visitor, currentDepth);
+					TraverseObject(value, type, staticType, visitor, currentDepth, serializeAsType);
 					break;
 			}
 		}
 
-		protected virtual void TraverseObject(object value, Type type, IObjectGraphVisitor visitor, int currentDepth)
+		protected virtual void TraverseObject(object value, Type type, Type staticType, IObjectGraphVisitor visitor, int currentDepth, Type serializeAsType)
 		{
 			var dict = value as IDictionary;
 			if (dict != null)
@@ -128,21 +133,19 @@ namespace YamlDotNet.RepresentationModel.Serialization
 				return;
 			}
 
-			SerializeProperties(value, type, visitor, currentDepth);
+			SerializeProperties(value, type, staticType, visitor, currentDepth, serializeAsType);
 		}
 
 		protected virtual void TraverseDictionary(IDictionary value, Type type, IObjectGraphVisitor visitor, int currentDepth)
 		{
 			visitor.VisitMappingStart(value, type, typeof(object), typeof(object));
 
-			foreach (DictionaryEntry entry in (IDictionary)value)
+			foreach (DictionaryEntry entry in value)
 			{
-				var keyType = GetObjectType(entry.Key);
-				var valueType = GetObjectType(entry.Value);
-				if (visitor.EnterMapping(entry.Key, keyType, entry.Value, valueType))
+				if (visitor.EnterMapping(entry.Key, typeof(Object), entry.Value, typeof(Object)))
 				{
-					Traverse(entry.Key, visitor, currentDepth);
-					Traverse(entry.Value, visitor, currentDepth);
+					Traverse(entry.Key, typeof(Object), visitor, currentDepth);
+					Traverse(entry.Value, typeof(Object), visitor, currentDepth);
 				}
 			}
 
@@ -175,8 +178,8 @@ namespace YamlDotNet.RepresentationModel.Serialization
 			{
 				if (visitor.EnterMapping(entry.Key, typeof(TKey), entry.Value, typeof(TValue)))
 				{
-					Traverse(entry.Key, visitor, currentDepth);
-					Traverse(entry.Value, visitor, currentDepth);
+					Traverse(entry.Key, typeof(TKey), visitor, currentDepth);
+					Traverse(entry.Value, typeof(TValue), visitor, currentDepth);
 				}
 			}
 		}
@@ -184,22 +187,23 @@ namespace YamlDotNet.RepresentationModel.Serialization
 		private void SerializeList(object value, Type type, IObjectGraphVisitor visitor, int currentDepth)
 		{
 			var enumerableType = ReflectionUtility.GetImplementedGenericInterface(type, typeof(IEnumerable<>));
-			var itemType = enumerableType != null ? enumerableType.GetGenericArguments()[0] : typeof(object);
+			var itemStaticType = enumerableType != null ? enumerableType.GetGenericArguments()[0] : typeof(Object);
 
-			visitor.VisitSequenceStart(value, type, itemType);
+			visitor.VisitSequenceStart(value, type, itemStaticType);
 
 			foreach (var item in (IEnumerable)value)
 			{
 				// TODO: Add SerializeMembersAs for list *elements*?
-				Traverse(item, visitor, currentDepth);
+				Traverse(item, itemStaticType, visitor, currentDepth);
 			}
 
 			visitor.VisitSequenceEnd(value, type);
 		}
 
-		protected virtual void SerializeProperties(object value, Type type, IObjectGraphVisitor visitor, int currentDepth)
+		protected virtual void SerializeProperties(object value, Type type, Type staticType, IObjectGraphVisitor visitor,
+		                                           int currentDepth, Type serializeAsType)
 		{
-			visitor.VisitMappingStart(value, type, typeof(string), typeof(object));
+			visitor.VisitMappingStart(value, type, typeof (string), typeof (object));
 
 			foreach (var propertyDescriptor in typeDescriptor.GetProperties(type))
 			{
@@ -207,12 +211,12 @@ namespace YamlDotNet.RepresentationModel.Serialization
 
 				if (visitor.EnterMapping(propertyDescriptor, propertyValue))
 				{
-					Traverse(propertyDescriptor.Name, visitor, currentDepth);
-					var attr = propertyDescriptor.Property.GetCustomAttributes(typeof (YamlMemberAttribute), true).Cast<YamlMemberAttribute>().FirstOrDefault();
+					Traverse(propertyDescriptor.Name, typeof (string), visitor, currentDepth);
+					var attr = propertyDescriptor.Property.GetCustomAttributes(typeof(YamlMemberAttribute), true).Cast<YamlMemberAttribute>().FirstOrDefault();
 					if (attr != null && attr.SerializeAs != null)
-						Traverse(propertyValue, visitor, currentDepth, attr.SerializeAs);
+						Traverse(propertyValue, propertyDescriptor.Property.PropertyType, visitor, currentDepth, attr.SerializeAs);
 					else
-						Traverse(propertyValue, visitor, currentDepth);
+						Traverse(propertyValue, propertyDescriptor.Property.PropertyType, visitor, currentDepth);
 				}
 			}
 
