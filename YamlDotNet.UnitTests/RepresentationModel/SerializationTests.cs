@@ -815,9 +815,9 @@ namespace YamlDotNet.UnitTests.RepresentationModel
 		class ParentChildContainer
 		{
 			public object SomeScalar { get; set; }
-			public Parent P1 { get; set; }
+			public Parent RegularParent { get; set; }
 			[YamlMember(serializeAs: typeof(Parent))]
-			public Child C { get; set; }
+			public Parent ParentWithSerializeAs { get; set; }
 		}
 
 		[Fact]
@@ -829,13 +829,13 @@ namespace YamlDotNet.UnitTests.RepresentationModel
 			var buffer = new StringWriter();
 			serializer.Serialize(buffer, new ParentChildContainer {
 				SomeScalar = "Hello",
-				P1 = new Child { ParentProp = "foo", ChildProp = "bar" },
+				RegularParent = new Child { ParentProp = "foo", ChildProp = "bar" },
 			});
 			Console.WriteLine(buffer.ToString());
 			var copy = (ParentChildContainer)deserializer.Deserialize(new StringReader(buffer.ToString()), typeof(ParentChildContainer));
 			Assert.Equal("Hello", copy.SomeScalar);
-			Assert.IsType(typeof(Child), copy.P1);
-			Assert.Equal("bar", ((Child)copy.P1).ChildProp);
+			Assert.IsType(typeof(Child), copy.RegularParent);
+			Assert.Equal("bar", ((Child)copy.RegularParent).ChildProp);
 		}
 
 		[Fact]
@@ -848,32 +848,12 @@ namespace YamlDotNet.UnitTests.RepresentationModel
 			serializer.Serialize(buffer, new ParentChildContainer
 			{
 				SomeScalar = "Hello",
-				C = new Child { ParentProp = "foo", ChildProp = "bar" },
+				ParentWithSerializeAs = new Child { ParentProp = "foo", ChildProp = "bar" },
 			});
 			Console.WriteLine(buffer.ToString());
 			var copy = (ParentChildContainer)deserializer.Deserialize(new StringReader(buffer.ToString()), typeof(ParentChildContainer));
-			Assert.Equal("Hello", copy.SomeScalar);
-			Assert.Equal("foo", copy.C.ParentProp);
-			Assert.Null(copy.C.ChildProp);
-		}
-
-		[Fact]
-		public void NoRoundtripWithSerializeAs()
-		{
-			var serializer = new Serializer();
-			var deserializer = new Deserializer();
-
-			var buffer = new StringWriter();
-			serializer.Serialize(buffer, new ParentChildContainer
-			{
-				SomeScalar = "Hello",
-				C = new Child { ParentProp = "foo", ChildProp = "bar" },
-			});
-			Console.WriteLine(buffer.ToString());
-			var copy = (ParentChildContainer)deserializer.Deserialize(new StringReader(buffer.ToString()), typeof(ParentChildContainer));
-			Assert.Equal("Hello", copy.SomeScalar);
-			Assert.Equal("foo", copy.C.ParentProp);
-			Assert.Null(copy.C.ChildProp);
+			Assert.IsType(typeof(Parent), copy.ParentWithSerializeAs);
+			Assert.Equal("foo", copy.ParentWithSerializeAs.ParentProp);
 		}
 
 		[Fact]

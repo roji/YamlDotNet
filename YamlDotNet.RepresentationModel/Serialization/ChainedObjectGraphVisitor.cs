@@ -31,14 +31,10 @@ namespace YamlDotNet.RepresentationModel.Serialization
 			nextVisitor.VisitScalar(scalar, scalarType);
 		}
 
-		public virtual void VisitMappingStart(object mapping, Type mappingType, Type keyType, Type valueType)
+		public virtual void VisitMappingStart(object mapping, Type mappingType, Type mappingStaticType,
+		                                      Type keyType, Type valueType)
 		{
-			nextVisitor.VisitMappingStart(mapping, mappingType, keyType, valueType);
-		}
-
-		public virtual void VisitMappingStart(object mapping, Type mappingType, Type keyType, Type valueType, bool emitTag)
-		{
-			nextVisitor.VisitMappingStart(mapping, mappingType, keyType, valueType, emitTag);
+			nextVisitor.VisitMappingStart(mapping, mappingType, mappingStaticType, keyType, valueType);
 		}
 
 		public virtual void VisitMappingEnd(object mapping, Type mappingType)

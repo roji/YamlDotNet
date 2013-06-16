@@ -163,7 +163,9 @@ namespace YamlDotNet.RepresentationModel.Serialization
 
 		private IObjectGraphVisitor CreateEmittingVisitor(Emitter emitter, IObjectGraphTraversalStrategy traversalStrategy, IEventEmitter eventEmitter, object graph, Type type)
 		{
-			IObjectGraphVisitor emittingVisitor = new EmittingObjectGraphVisitor(eventEmitter);
+			var roundtrip = (options & SerializationOptions.Roundtrip) != 0;
+
+			IObjectGraphVisitor emittingVisitor = new EmittingObjectGraphVisitor(eventEmitter, roundtrip);
 
 			emittingVisitor = new CustomSerializationObjectGraphVisitor(emitter, emittingVisitor, Converters);
 
@@ -172,7 +174,7 @@ namespace YamlDotNet.RepresentationModel.Serialization
 				var anchorAssigner = new AnchorAssigner();
 				traversalStrategy.Traverse(graph, anchorAssigner, type);
 
-				emittingVisitor = new AnchorAssigningObjectGraphVisitor(emittingVisitor, eventEmitter, anchorAssigner);
+				emittingVisitor = new AnchorAssigningObjectGraphVisitor(emittingVisitor, eventEmitter, anchorAssigner, roundtrip);
 			}
 
 			if ((options & SerializationOptions.EmitDefaults) == 0)

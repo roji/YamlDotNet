@@ -48,20 +48,11 @@ namespace YamlDotNet.RepresentationModel.Serialization
 		/// Notifies the visitor that the traversal of a mapping is about to begin.
 		/// </summary>
 		/// <param name="mapping">The value that corresponds to the mapping.</param>
-		/// <param name="mappingType">The static type of the mapping.</param>
+		/// <param name="mappingType">The actual type of <paramref name="mapping"/> after possible override by SerializeAs.</param>
+		/// <param name="mappingStaticType">The static type of <paramref name="mapping"/>, e.g. its property type.</param>
 		/// <param name="keyType">The static type of the keys of the mapping.</param>
 		/// <param name="valueType">The static type of the values of the mapping.</param>
-		void VisitMappingStart(object mapping, Type mappingType, Type keyType, Type valueType);
-
-		/// <summary>
-		/// Notifies the visitor that the traversal of a mapping is about to begin.
-		/// </summary>
-		/// <param name="mapping">The value that corresponds to the mapping.</param>
-		/// <param name="mappingType">The static type of the mapping.</param>
-		/// <param name="keyType">The static type of the keys of the mapping.</param>
-		/// <param name="valueType">The static type of the values of the mapping.</param>
-		/// <param name="emitTag">Whether to emit a YAML tag with the mapping type.</param>
-		void VisitMappingStart(object mapping, Type mappingType, Type keyType, Type valueType, bool emitTag);
+		void VisitMappingStart(object mapping, Type mappingType, Type mappingStaticType, Type keyType, Type valueType);
 
 		/// <summary>
 		/// Notifies the visitor that the traversal of a mapping has ended.

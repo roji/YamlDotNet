@@ -38,7 +38,7 @@ namespace YamlDotNet.RepresentationModel.Serialization
 
 		void IObjectGraphTraversalStrategy.Traverse(object graph, IObjectGraphVisitor visitor, Type serializeAsType)
 		{
-			Traverse(graph, typeof(Object), visitor, 0, serializeAsType);
+			Traverse(graph, null, visitor, 0, serializeAsType);
 		}
 
 		/// <summary>
@@ -138,7 +138,7 @@ namespace YamlDotNet.RepresentationModel.Serialization
 
 		protected virtual void TraverseDictionary(IDictionary value, Type type, IObjectGraphVisitor visitor, int currentDepth)
 		{
-			visitor.VisitMappingStart(value, type, typeof(object), typeof(object));
+			visitor.VisitMappingStart(value, type, null, typeof(object), typeof(object));
 
 			foreach (DictionaryEntry entry in value)
 			{
@@ -157,7 +157,7 @@ namespace YamlDotNet.RepresentationModel.Serialization
 			var entryTypes = dictionaryType.GetGenericArguments();
 
 			// dictionaryType is IDictionary<TKey, TValue>
-			visitor.VisitMappingStart(value, type, entryTypes[0], entryTypes[1]);
+			visitor.VisitMappingStart(value, type, null, entryTypes[0], entryTypes[1]);
 
 			// Invoke TraverseGenericDictionaryHelper<,>
 			traverseGenericDictionaryHelperGeneric
@@ -203,7 +203,7 @@ namespace YamlDotNet.RepresentationModel.Serialization
 		protected virtual void SerializeProperties(object value, Type type, Type staticType, IObjectGraphVisitor visitor,
 		                                           int currentDepth, Type serializeAsType)
 		{
-			visitor.VisitMappingStart(value, type, typeof (string), typeof (object));
+			visitor.VisitMappingStart(value, type, staticType, typeof (string), typeof (object));
 
 			foreach (var propertyDescriptor in typeDescriptor.GetProperties(type))
 			{

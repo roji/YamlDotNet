@@ -8,12 +8,14 @@ namespace YamlDotNet.RepresentationModel.Serialization
 		private readonly IEventEmitter eventEmitter;
 		private readonly IAliasProvider aliasProvider;
 		private readonly HashSet<string> emittedAliases = new HashSet<string>();
+		private readonly bool roundtrip;
 
-		public AnchorAssigningObjectGraphVisitor(IObjectGraphVisitor nextVisitor, IEventEmitter eventEmitter, IAliasProvider aliasProvider)
+		public AnchorAssigningObjectGraphVisitor(IObjectGraphVisitor nextVisitor, IEventEmitter eventEmitter, IAliasProvider aliasProvider, bool roundtrip)
 			: base(nextVisitor)
 		{
 			this.eventEmitter = eventEmitter;
 			this.aliasProvider = aliasProvider;
+			this.roundtrip = roundtrip;
 		}
 
 		public override bool Enter(object value, Type type)
@@ -28,17 +30,17 @@ namespace YamlDotNet.RepresentationModel.Serialization
 			return base.Enter(value, type);
 		}
 
-		public override void VisitMappingStart(object mapping, Type mappingType, Type keyType, Type valueType)
+		public override void VisitMappingStart(object mapping, Type mappingType, Type mappingStaticType, Type keyType, Type valueType)
 		{
-			eventEmitter.Emit(new MappingStartEventInfo(mapping, mappingType) { Anchor = aliasProvider.GetAlias(mapping) });
-		}
-
-		public override void VisitMappingStart(object mapping, Type mappingType, Type keyType, Type valueType, bool emitTag)
-		{
+			// TODO: This is a duplication of code in EmittingObjectGraphVisitor. Considering merging these two classes
 			var eventInfo = new MappingStartEventInfo(mapping, mappingType) { Anchor = aliasProvider.GetAlias(mapping) };
-			// TODO: Better/centralized way to create tags
-			if (emitTag)
-				eventInfo.Tag = "!" + mappingType.AssemblyQualifiedName;
+
+			if (roundtrip)
+			{
+				// TODO: Better/centralized way to create tags
+				if (mappingStaticType != null && mappingType != mappingStaticType)
+					eventInfo.Tag = "!" + mappingType.AssemblyQualifiedName;
+			}
 			eventEmitter.Emit(eventInfo);
 		}
 

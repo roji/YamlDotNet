@@ -50,8 +50,8 @@ namespace YamlDotNet.RepresentationModel.Serialization
 		}
 
 		void IObjectGraphVisitor.VisitScalar(object scalar, Type scalarType) { }
-		void IObjectGraphVisitor.VisitMappingStart(object mapping, Type mappingType, Type keyType, Type valueType) { }
-		void IObjectGraphVisitor.VisitMappingStart(object mapping, Type mappingType, Type keyType, Type valueType, bool emitTag) { }
+		void IObjectGraphVisitor.VisitMappingStart(object mapping, Type mappingType, Type mappingStaticType,
+		                                           Type keyType, Type valueType) { }
 		void IObjectGraphVisitor.VisitMappingEnd(object mapping, Type mappingType) { }
 		void IObjectGraphVisitor.VisitSequenceStart(object sequence, Type sequenceType, Type elementType) { }
 		void IObjectGraphVisitor.VisitSequenceEnd(object sequence, Type sequenceType) { }
